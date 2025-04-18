@@ -1,5 +1,5 @@
 import type { ProjectIcon, ProjectRole, ProjectType } from '@n8n/api-types';
-import type { Scope } from '@n8n/permissions';
+import type { AssignableRole, GlobalRole, Scope } from '@n8n/permissions';
 import type express from 'express';
 import type {
 	ICredentialDataDecryptedObject,
@@ -11,7 +11,7 @@ import type {
 
 import type { CredentialsEntity } from '@/databases/entities/credentials-entity';
 import type { Project } from '@/databases/entities/project';
-import type { AssignableRole, GlobalRole, User } from '@/databases/entities/user';
+import type { User } from '@/databases/entities/user';
 import type { Variables } from '@/databases/entities/variables';
 import type { WorkflowEntity } from '@/databases/entities/workflow-entity';
 import type { WorkflowHistory } from '@/databases/entities/workflow-history';
@@ -62,6 +62,7 @@ export namespace ListQuery {
 		skip?: string;
 		take?: string;
 		select?: string;
+		sortBy?: string;
 	};
 
 	export type Options = {
@@ -69,6 +70,7 @@ export namespace ListQuery {
 		select?: Record<string, true>;
 		skip?: number;
 		take?: number;
+		sortBy?: string;
 	};
 
 	/**
@@ -81,6 +83,10 @@ export namespace ListQuery {
 			Partial<Pick<WorkflowEntity, OptionalBaseFields>>;
 
 		type SharedField = Partial<Pick<WorkflowEntity, 'shared'>>;
+
+		type SortingField = 'createdAt' | 'updatedAt' | 'name';
+
+		export type SortOrder = `${SortingField}:asc` | `${SortingField}:desc`;
 
 		type OwnedByField = { ownedBy: SlimUser | null; homeProject: SlimProject | null };
 
@@ -141,11 +147,14 @@ export declare namespace CredentialRequest {
 		isManaged?: boolean;
 	}>;
 
-	type Create = AuthenticatedRequest<{}, {}, CredentialProperties>;
-
 	type Get = AuthenticatedRequest<{ credentialId: string }, {}, {}, Record<string, string>>;
 
-	type GetMany = AuthenticatedRequest<{}, {}, {}, ListQuery.Params & { includeScopes?: string }> & {
+	type GetMany = AuthenticatedRequest<
+		{},
+		{},
+		{},
+		ListQuery.Params & { includeScopes?: string; includeFolders?: string }
+	> & {
 		listQueryOptions: ListQuery.Options;
 	};
 
@@ -154,8 +163,6 @@ export declare namespace CredentialRequest {
 	type GetAll = AuthenticatedRequest<{}, {}, {}, { filter: string }>;
 
 	type Update = AuthenticatedRequest<{ credentialId: string }, {}, CredentialProperties>;
-
-	type NewName = AuthenticatedRequest<{}, {}, {}, { name?: string }>;
 
 	type Test = AuthenticatedRequest<{}, {}, INodeCredentialTestRequest>;
 
@@ -173,14 +180,6 @@ export declare namespace CredentialRequest {
 		{},
 		{ workflowId: string } | { projectId: string }
 	>;
-}
-
-// ----------------------------------
-//               /api-keys
-// ----------------------------------
-
-export declare namespace ApiKeysRequest {
-	export type DeleteAPIKey = AuthenticatedRequest<{ id: string }>;
 }
 
 // ----------------------------------
@@ -296,18 +295,6 @@ export declare namespace NodeRequest {
 export declare namespace LicenseRequest {
 	type Activate = AuthenticatedRequest<{}, {}, { activationKey: string }, {}>;
 }
-
-export type BinaryDataRequest = AuthenticatedRequest<
-	{},
-	{},
-	{},
-	{
-		id: string;
-		action: 'view' | 'download';
-		fileName?: string;
-		mimeType?: string;
-	}
->;
 
 // ----------------------------------
 //           /variables

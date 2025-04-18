@@ -4,6 +4,10 @@
 
 import { getVisiblePopper, getVisibleSelect } from '../utils/popper';
 
+export function getNdvContainer() {
+	return cy.getByTestId('ndv');
+}
+
 export function getCredentialSelect(eq = 0) {
 	return cy.getByTestId('node-credentials-select').eq(eq);
 }
@@ -25,7 +29,7 @@ export function getParameterInputByName(name: string) {
 }
 
 export function getInputPanel() {
-	return cy.getByTestId('input-panel');
+	return cy.getByTestId('ndv-input-panel');
 }
 
 export function getMainPanel() {
@@ -46,6 +50,10 @@ export function getResourceLocator(paramName: string) {
 
 export function getResourceLocatorInput(paramName: string) {
 	return getResourceLocator(paramName).find('[data-test-id="rlc-input-container"]');
+}
+
+export function getInputPanelDataContainer() {
+	return getInputPanel().getByTestId('ndv-data-container');
 }
 
 export function getOutputPanelDataContainer() {
@@ -101,11 +109,13 @@ export function getNodeOutputHint() {
 }
 
 export function getWorkflowCards() {
-	return cy.getByTestId('resources-list-item');
+	return cy.getByTestId('resources-list-item-workflow');
 }
 
 export function getWorkflowCard(workflowName: string) {
-	return getWorkflowCards().contains(workflowName).parents('[data-test-id="resources-list-item"]');
+	return getWorkflowCards()
+		.contains(workflowName)
+		.parents('[data-test-id="resources-list-item-workflow"]');
 }
 
 export function getWorkflowCardContent(workflowName: string) {
@@ -118,6 +128,10 @@ export function getNodeRunInfoStale() {
 
 export function getNodeOutputErrorMessage() {
 	return getOutputPanel().findChildByTestId('node-error-message');
+}
+
+export function getParameterExpressionPreviewValue() {
+	return cy.getByTestId('parameter-expression-preview-value');
 }
 
 /**
@@ -202,6 +216,10 @@ export function clickWorkflowCardContent(workflowName: string) {
 	getWorkflowCardContent(workflowName).click();
 }
 
+export function clickAssignmentCollectionAdd() {
+	cy.getByTestId('assignment-collection-drop-area').click();
+}
+
 export function assertNodeOutputHintExists() {
 	getNodeOutputHint().should('exist');
 }
@@ -225,7 +243,7 @@ export function populateMapperFields(fields: ReadonlyArray<[string, string]>) {
 		getParameterInputByName(name).type(value);
 
 		// Click on a parent to dismiss the pop up which hides the field below.
-		getParameterInputByName(name).parent().parent().parent().click('topLeft');
+		getParameterInputByName(name).parent().parent().parent().parent().click('topLeft');
 	}
 }
 
@@ -253,4 +271,30 @@ export function populateFixedCollection<T extends readonly string[]>(
 				.type(`${param}{downArrow}{enter}`);
 		}
 	}
+}
+
+export function assertInlineExpressionValid() {
+	cy.getByTestId('inline-expression-editor-input').find('.cm-valid-resolvable').should('exist');
+}
+
+export function hoverInputItemByText(text: string) {
+	return getInputPanelDataContainer().contains(text).trigger('mouseover', { force: true });
+}
+
+export function verifyInputHoverState(expectedText: string) {
+	getInputPanelDataContainer()
+		.find('[data-test-id="hovering-item"]')
+		.should('be.visible')
+		.should('have.text', expectedText);
+}
+
+export function verifyOutputHoverState(expectedText: string) {
+	getOutputPanelDataContainer()
+		.find('[data-test-id="hovering-item"]')
+		.should('be.visible')
+		.should('have.text', expectedText);
+}
+
+export function resetHoverState() {
+	getBackToCanvasButton().trigger('mouseover');
 }
